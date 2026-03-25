@@ -1,0 +1,44 @@
+{
+  "expo": {
+    "name": "Masjid Al-Ikhlas",
+    "slug": "masjid-al-ikhlas",
+    "scheme": "masjidalikhlas",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "expo-notifications",
+      "expo-location",
+      "expo-image-picker"
+    ],
+    "android": {
+      "package": "com.masjidalikhlas.app",
+      "permissions": [
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.RECORD_AUDIO"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.masjidalikhlas.app",
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIBackgroundModes": [
+          "remote-notification"
+        ]
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "e56e291a-2ab9-4e2f-87e1-0d1f5c945c5a"
+      },
+      "router": {}
+    },
+    "owner": "fizzxxc"
+  }
+}
