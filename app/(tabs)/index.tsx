@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { router } from 'expo-router';
-import { AutoSlider } from '@/src/components/AutoSlider';
-import { MosqueMap } from '@/src/components/MosqueMap';
+import { BellRing, Compass, FilePlus2, Sparkles } from 'lucide-react-native';
+import AutoSlider from '@/src/components/AutoSlider';
+import MosqueMap from '@/src/components/MosqueMap';
 import { PrayerCard } from '@/src/components/PrayerCard';
 import { Screen } from '@/src/components/Screen';
+import { GlassCard } from '@/src/components/ui/GlassCard';
+import { SectionTitle } from '@/src/components/ui/SectionTitle';
 import { usePrayerTimes } from '@/src/hooks/usePrayerTimes';
 import { registerForPushNotificationsAsync } from '@/src/lib/notifications';
 import { isSupabaseConfigured, supabase } from '@/src/lib/supabase';
 import { getNextPrayer } from '@/src/utils/date';
+import { useAppTheme } from '@/src/hooks/useAppTheme';
 
 const demoSlides = [
   {
@@ -21,13 +25,14 @@ const demoSlides = [
 const demoAnnouncements = [
   {
     id: 'demo-a',
-    title: 'Supabase belum dikonfigurasi',
+    title: 'Mode Demo Aktif',
     content: 'Isi file .env terlebih dahulu agar data realtime, login, laporan, dan admin panel aktif sepenuhnya.',
   },
 ];
 
 export default function HomeScreen() {
   const { data: prayerData, error: prayerError } = usePrayerTimes();
+  const { colors } = useAppTheme();
   const [slides, setSlides] = useState<any[]>(demoSlides);
   const [announcements, setAnnouncements] = useState<any[]>(demoAnnouncements);
   const today = useMemo(() => prayerData.find((it: any) => new Date(it.tanggal).getDate() === new Date().getDate()) || prayerData[0], [prayerData]);
@@ -46,7 +51,7 @@ export default function HomeScreen() {
       supabase.auth.getUser(),
     ]);
     setSlides(slideData?.length ? slideData : demoSlides);
-    setAnnouncements(announcementData?.length ? announcementData : []);
+    setAnnouncements(announcementData?.length ? announcementData : demoAnnouncements);
     const user = userResponse.data.user;
     if (user) await registerForPushNotificationsAsync(user.id);
   }
@@ -59,55 +64,100 @@ export default function HomeScreen() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'slides' }, loadHome)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'announcements' }, loadHome)
       .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
     <Screen>
-      <Text style={{ fontSize: 28, fontWeight: '800' }}>Masjid Al-Ikhlas</Text>
-      <Text style={{ color: '#4b5563' }}>Aplikasi informasi masjid, jadwal sholat, laporan jamaah, dan arah kiblat.</Text>
+      <SectionTitle title="Masjid Al-Ikhlas" subtitle="Aplikasi informasi masjid, jadwal sholat, laporan jamaah, dan arah kiblat dengan tampilan liquid glass modern." />
       {slides.length ? <AutoSlider slides={slides} /> : null}
 
       {!isSupabaseConfigured ? (
-        <View style={{ backgroundColor: '#fff7ed', padding: 14, borderRadius: 18, gap: 6 }}>
-          <Text style={{ fontWeight: '700', color: '#9a3412' }}>Mode demo aktif</Text>
-          <Text style={{ color: '#9a3412' }}>Isi EXPO_PUBLIC_SUPABASE_URL dan EXPO_PUBLIC_SUPABASE_ANON_KEY di file .env, lalu restart Expo agar semua fitur realtime aktif.</Text>
-        </View>
+        <GlassCard>
+          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'flex-start' }}>
+            <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: '#fff7ed', alignItems: 'center', justifyContent: 'center' }}>
+              <BellRing size={18} color="#c2410c" />
+            </View>
+            <View style={{ flex: 1, gap: 6 }}>
+              <Text style={{ fontWeight: '900', color: '#c2410c' }}>Mode demo aktif</Text>
+              <Text style={{ color: colors.subtext, lineHeight: 20 }}>
+                Isi EXPO_PUBLIC_SUPABASE_URL dan EXPO_PUBLIC_SUPABASE_ANON_KEY di file .env, lalu restart Expo agar semua fitur realtime aktif.
+              </Text>
+            </View>
+          </View>
+        </GlassCard>
       ) : null}
 
       {today ? (
-        <View style={{ backgroundColor: '#f0fdf4', padding: 16, borderRadius: 18, gap: 8 }}>
-          <Text style={{ fontSize: 18, fontWeight: '700' }}>Jadwal Hari Ini</Text>
-          {nextPrayer ? <Text>Sholat berikutnya: <Text style={{ fontWeight: '700', textTransform: 'capitalize' }}>{nextPrayer.name}</Text> pukul {nextPrayer.time}</Text> : null}
-          <View style={{ gap: 10 }}>
-            <PrayerCard name="subuh" time={today.subuh} />
-            <PrayerCard name="dzuhur" time={today.dzuhur} />
-            <PrayerCard name="ashar" time={today.ashar} />
-            <PrayerCard name="maghrib" time={today.maghrib} />
-            <PrayerCard name="isya" time={today.isya} />
+        <GlassCard>
+          <View style={{ gap: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <SectionTitle title="Jadwal Hari Ini" subtitle="Waktu sholat utama untuk hari ini." />
+              <View style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: colors.primarySoft }}>
+                <Text style={{ color: colors.primary, fontWeight: '800' }}>Live</Text>
+              </View>
+            </View>
+
+            {nextPrayer ? (
+              <View style={{ borderRadius: 20, padding: 16, backgroundColor: colors.primarySoft }}>
+                <Text style={{ color: colors.subtext }}>Sholat berikutnya</Text>
+                <Text style={{ fontSize: 22, fontWeight: '900', color: colors.text, marginTop: 4, textTransform: 'capitalize' }}>
+                  {nextPrayer.name} · {nextPrayer.time}
+                </Text>
+              </View>
+            ) : null}
+
+            <View style={{ gap: 10 }}>
+              <PrayerCard name="subuh" time={today.subuh} />
+              <PrayerCard name="dzuhur" time={today.dzuhur} />
+              <PrayerCard name="ashar" time={today.ashar} />
+              <PrayerCard name="maghrib" time={today.maghrib} />
+              <PrayerCard name="isya" time={today.isya} />
+            </View>
           </View>
-        </View>
+        </GlassCard>
       ) : (
-        <View style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 18 }}>
-          <Text style={{ fontWeight: '700' }}>Jadwal sholat belum tersedia</Text>
-          <Text style={{ marginTop: 6, color: '#4b5563' }}>{prayerError || 'Cek koneksi internet atau coba lagi beberapa saat.'}</Text>
-        </View>
+        <GlassCard>
+          <Text style={{ fontWeight: '900', fontSize: 16, color: colors.text }}>Jadwal sholat belum tersedia</Text>
+          <Text style={{ marginTop: 8, color: colors.subtext }}>{prayerError || 'Cek koneksi internet atau coba lagi beberapa saat.'}</Text>
+        </GlassCard>
       )}
 
-      <View style={{ flexDirection: 'row', gap: 10, flexWrap: 'wrap' }}>
-        <Pressable onPress={() => router.push('/qiblat')} style={{ backgroundColor: '#16a34a', padding: 14, borderRadius: 14, flex: 1 }}><Text style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}>Arah Kiblat</Text></Pressable>
-        <Pressable onPress={() => router.push('/(tabs)/laporan')} style={{ backgroundColor: '#16a34a', padding: 14, borderRadius: 14, flex: 1 }}><Text style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}>Buat Laporan</Text></Pressable>
+      <View style={{ flexDirection: 'row', gap: 12 }}>
+        <Pressable onPress={() => router.push('/qiblat')} style={{ flex: 1 }}>
+          <GlassCard>
+            <View style={{ gap: 10, alignItems: 'center', paddingVertical: 4 }}>
+              <Compass color={colors.primary} />
+              <Text style={{ color: colors.text, fontWeight: '800' }}>Arah Kiblat</Text>
+            </View>
+          </GlassCard>
+        </Pressable>
+        <Pressable onPress={() => router.push('/(tabs)/laporan')} style={{ flex: 1 }}>
+          <GlassCard>
+            <View style={{ gap: 10, alignItems: 'center', paddingVertical: 4 }}>
+              <FilePlus2 color={colors.primary} />
+              <Text style={{ color: colors.text, fontWeight: '800' }}>Buat Laporan</Text>
+            </View>
+          </GlassCard>
+        </Pressable>
       </View>
 
-      <Text style={{ fontSize: 20, fontWeight: '700' }}>Informasi Terkini</Text>
+      <SectionTitle title="Informasi Terkini" subtitle="Pengumuman dan update terbaru dari admin masjid." />
       {announcements.map((item) => (
-        <View key={item.id} style={{ backgroundColor: '#f8fafc', padding: 16, borderRadius: 18 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700' }}>{item.title}</Text>
-          <Text style={{ marginTop: 8 }}>{item.content}</Text>
-        </View>
+        <GlassCard key={item.id}>
+          <View style={{ gap: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Sparkles size={16} color={colors.primary} />
+              <Text style={{ fontSize: 16, fontWeight: '900', color: colors.text }}>{item.title}</Text>
+            </View>
+            <Text style={{ color: colors.subtext, lineHeight: 20 }}>{item.content}</Text>
+          </View>
+        </GlassCard>
       ))}
 
-      <Text style={{ fontSize: 20, fontWeight: '700' }}>Lokasi Masjid</Text>
+      <SectionTitle title="Lokasi Masjid" subtitle="Temukan lokasi masjid dan buka petunjuk arah dengan cepat." />
       <MosqueMap />
     </Screen>
   );

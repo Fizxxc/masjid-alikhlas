@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Alert, FlatList, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Text, View } from 'react-native';
+import { MessageSquareWarning } from 'lucide-react-native';
 import { Screen } from '@/src/components/Screen';
+import { GlassCard } from '@/src/components/ui/GlassCard';
+import { SectionTitle } from '@/src/components/ui/SectionTitle';
+import { AppInput } from '@/src/components/ui/AppInput';
+import { AppButton } from '@/src/components/ui/AppButton';
+import { useAppTheme } from '@/src/hooks/useAppTheme';
 import { supabase } from '@/src/lib/supabase';
 import { formatDateTime } from '@/src/utils/date';
 
@@ -9,6 +15,7 @@ export default function LaporanScreen() {
   const [category, setCategory] = useState('fasilitas');
   const [description, setDescription] = useState('');
   const [reports, setReports] = useState<any[]>([]);
+  const { colors } = useAppTheme();
 
   async function loadMyReports() {
     const { data: auth } = await supabase.auth.getUser();
@@ -20,6 +27,7 @@ export default function LaporanScreen() {
   async function submit() {
     const { data: auth } = await supabase.auth.getUser();
     if (!auth.user) return Alert.alert('Gagal', 'Anda belum login');
+    if (!title.trim() || !description.trim()) return Alert.alert('Data belum lengkap', 'Isi judul dan isi laporan.');
     const { error } = await supabase.from('reports').insert({
       user_id: auth.user.id,
       title,
@@ -36,32 +44,55 @@ export default function LaporanScreen() {
   useEffect(() => {
     loadMyReports();
     const channel = supabase.channel('my-reports').on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, loadMyReports).subscribe();
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   return (
     <Screen scroll={false}>
-      <Text style={{ fontSize: 28, fontWeight: '800', marginBottom: 12 }}>Laporan</Text>
       <FlatList
+        showsVerticalScrollIndicator={false}
         ListHeaderComponent={(
-          <View style={{ gap: 10, marginBottom: 16 }}>
-            <TextInput placeholder="Judul laporan" value={title} onChangeText={setTitle} style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 14, padding: 12 }} />
-            <TextInput placeholder="Kategori" value={category} onChangeText={setCategory} style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 14, padding: 12 }} />
-            <TextInput placeholder="Isi laporan" value={description} onChangeText={setDescription} multiline numberOfLines={5} style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 14, padding: 12, minHeight: 120, textAlignVertical: 'top' }} />
-            <Pressable onPress={submit} style={{ backgroundColor: '#16a34a', padding: 14, borderRadius: 14 }}><Text style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}>Kirim Laporan</Text></Pressable>
-            <Text style={{ fontSize: 20, fontWeight: '700', marginTop: 10 }}>Riwayat Laporan</Text>
+          <View style={{ gap: 16, marginBottom: 16 }}>
+            <SectionTitle title="Laporan Jamaah" subtitle="Kirim laporan fasilitas, kebersihan, keamanan, atau saran untuk admin masjid." />
+            <GlassCard>
+              <View style={{ gap: 12 }}>
+                <AppInput label="Judul Laporan" placeholder="Contoh: Lampu teras mati" value={title} onChangeText={setTitle} />
+                <AppInput label="Kategori" placeholder="fasilitas / kebersihan / keamanan" value={category} onChangeText={setCategory} />
+                <AppInput
+                  label="Isi Laporan"
+                  placeholder="Tulis detail laporan..."
+                  value={description}
+                  onChangeText={setDescription}
+                  multiline
+                  numberOfLines={6}
+                  style={{ minHeight: 120, textAlignVertical: 'top' }}
+                />
+                <AppButton title="Kirim Laporan" onPress={submit} />
+              </View>
+            </GlassCard>
+
+            <SectionTitle title="Riwayat Laporan" subtitle="Pantau status laporan yang sudah kamu kirim." />
           </View>
         )}
         data={reports}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <View style={{ backgroundColor: '#f8fafc', borderRadius: 18, padding: 16, marginBottom: 12 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700' }}>{item.title}</Text>
-            <Text style={{ marginTop: 4 }}>Kategori: {item.category}</Text>
-            <Text>Status: {item.status}</Text>
-            <Text style={{ marginTop: 8 }}>{item.description}</Text>
-            <Text style={{ marginTop: 8, color: '#6b7280' }}>{formatDateTime(item.created_at)}</Text>
-          </View>
+          <GlassCard style={{ marginBottom: 12 }}>
+            <View style={{ gap: 10 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <MessageSquareWarning size={18} color={colors.primary} />
+                <Text style={{ fontSize: 16, fontWeight: '900', color: colors.text, flex: 1 }}>{item.title}</Text>
+                <View style={{ backgroundColor: colors.primarySoft, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 }}>
+                  <Text style={{ color: colors.primary, fontWeight: '800', textTransform: 'capitalize' }}>{item.status}</Text>
+                </View>
+              </View>
+              <Text style={{ color: colors.subtext }}>Kategori: {item.category}</Text>
+              <Text style={{ color: colors.text, lineHeight: 20 }}>{item.description}</Text>
+              <Text style={{ color: colors.subtext }}>{formatDateTime(item.created_at)}</Text>
+            </View>
+          </GlassCard>
         )}
       />
     </Screen>

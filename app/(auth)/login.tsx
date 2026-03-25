@@ -1,9 +1,16 @@
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Text, View } from 'react-native';
 import { Link, router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Mosque, ShieldCheck } from 'lucide-react-native';
 import { supabase, isSupabaseConfigured } from '@/src/lib/supabase';
+import { useAppTheme } from '@/src/hooks/useAppTheme';
+import { GlassCard } from '@/src/components/ui/GlassCard';
+import { AppInput } from '@/src/components/ui/AppInput';
+import { AppButton } from '@/src/components/ui/AppButton';
 
 export default function LoginScreen() {
+  const { colors, isDark } = useAppTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -24,31 +31,52 @@ export default function LoginScreen() {
   }
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1, backgroundColor: '#f0fdf4' }}>
-      <View style={{ flex: 1, padding: 20, justifyContent: 'center' }}>
-        <View style={{ backgroundColor: '#fff', borderRadius: 28, padding: 20, gap: 14 }}>
-          <Text style={{ fontSize: 28, fontWeight: '800' }}>Masjid Al-Ikhlas</Text>
-          <Text style={{ color: '#4b5563' }}>Login untuk masuk ke aplikasi jamaah dan admin.</Text>
-
-          <View style={{ gap: 8 }}>
-            <Text style={{ fontWeight: '700' }}>Email</Text>
-            <TextInput placeholder="Masukkan email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 14, padding: 12 }} />
+    <LinearGradient colors={isDark ? ['#06100c', '#0e1d16', '#0b1511'] : ['#e9f7ed', '#f8fcf9', '#ddf7e5']} style={{ flex: 1 }}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+        <View style={{ flex: 1, justifyContent: 'center', padding: 20, gap: 18 }}>
+          <View style={{ alignItems: 'center', gap: 10 }}>
+            <View style={{ width: 78, height: 78, borderRadius: 26, backgroundColor: colors.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
+              <Mosque size={34} color={colors.primary} />
+            </View>
+            <Text style={{ color: colors.text, fontSize: 30, fontWeight: '900' }}>Masjid Al-Ikhlas</Text>
+            <Text style={{ color: colors.subtext, textAlign: 'center', maxWidth: 310, lineHeight: 21 }}>
+              Login untuk akses jadwal sholat, informasi masjid, laporan jamaah, dan fitur admin.
+            </Text>
           </View>
 
-          <View style={{ gap: 8 }}>
-            <Text style={{ fontWeight: '700' }}>Password</Text>
-            <TextInput placeholder="Masukkan password" value={password} onChangeText={setPassword} secureTextEntry style={{ borderWidth: 1, borderColor: '#d1d5db', borderRadius: 14, padding: 12 }} />
-          </View>
+          <GlassCard intensity={65}>
+            <View style={{ gap: 14 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <ShieldCheck size={18} color={colors.primary} />
+                <Text style={{ color: colors.text, fontSize: 18, fontWeight: '800' }}>Masuk ke akun Anda</Text>
+              </View>
 
-          <Pressable onPress={signIn} style={{ backgroundColor: '#16a34a', padding: 14, borderRadius: 14 }}>
-            <Text style={{ color: '#fff', textAlign: 'center', fontWeight: '700' }}>{loading ? 'Memproses...' : 'Login'}</Text>
-          </Pressable>
+              <AppInput
+                label="Email"
+                placeholder="Masukkan email"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+              />
 
-          <Link href="/(auth)/register" asChild>
-            <Pressable><Text style={{ textAlign: 'center' }}>Belum punya akun? Register</Text></Pressable>
-          </Link>
+              <AppInput
+                label="Password"
+                placeholder="Masukkan password"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+              />
+
+              <AppButton title={loading ? 'Memproses...' : 'Login'} onPress={signIn} loading={loading} />
+
+              <Link href="/(auth)/register" style={{ textAlign: 'center', color: colors.subtext, fontWeight: '700' }}>
+                Belum punya akun? Daftar sekarang
+              </Link>
+            </View>
+          </GlassCard>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }

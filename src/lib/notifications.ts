@@ -14,6 +14,7 @@ Notifications.setNotificationHandler({
 });
 
 export async function registerForPushNotificationsAsync(userId: string) {
+  if (Platform.OS === 'web') return null;
   if (!Device.isDevice) return null;
 
   const { status: existingStatus } = await Notifications.getPermissionsAsync();
@@ -35,9 +36,11 @@ export async function registerForPushNotificationsAsync(userId: string) {
     });
   }
 
-  const token = (await Notifications.getExpoPushTokenAsync({
-    projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
-  })).data;
+  const token = (
+    await Notifications.getExpoPushTokenAsync({
+      projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
+    })
+  ).data;
 
   await supabase.from('push_tokens').upsert(
     {
